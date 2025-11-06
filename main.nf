@@ -61,7 +61,7 @@ workflow{
     //
     // MODULE: SAMTOOLS INDEX
     //
-     /*
+
     SAMTOOLS_INDEX(
         ch_inputData.map{ meta, bam -> [meta, bam] }
     )
@@ -119,7 +119,7 @@ workflow{
     DUMP_SOFTWARE_VERSIONS (
         ch_versions.unique().collectFile()
     )
-    */
+
 }
 
 /*
