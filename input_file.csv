@@ -1,2 +1,2 @@
-sample_id,reference_name,start_cut_site,endCutSite,bam_path
+sample_id,reference_name,start_cut_site,end_cut_site,bam_path
 unique_sample_id_1,/path/to/reference.fa,5_guide_cut_site,3_guide_cut_site,/path/to/bam/file/to/analyse.bam
