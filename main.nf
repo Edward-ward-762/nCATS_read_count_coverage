@@ -61,7 +61,7 @@ workflow{
     //
     // MODULE: SAMTOOLS INDEX
     //
-
+     /*
     SAMTOOLS_INDEX(
         ch_inputData.map{ meta, bam -> [meta, bam] }
     )
