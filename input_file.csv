@@ -1,0 +1,2 @@
+sample_id,reference_path,5_guide_cut_pos,3_guide_cut_pos,bam_path
+unique_sample_id_1,/path/to/reference.fa,5_guide_cut_site,3_guide_cut_site,/path/to/bam/file/to/analyse.bam
