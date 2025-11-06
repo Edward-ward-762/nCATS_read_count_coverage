@@ -104,6 +104,10 @@ workflow{
     // MODULE: readsCount
     //
 
+    readsCount(
+        ch_inputData.map{ meta, bam -> [meta, bam] }
+    )
+    ch_versions = ch_versions.mix(readsCount.out.versions)
 
     //
     // ****************************

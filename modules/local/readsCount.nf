@@ -1,20 +1,21 @@
 #!/usr/bin/env nextflow
 
 process readsCount {
+    tag "$meta.id"
     label 'process_low'
 
     container "docker.io/edwardward762/transgenemapping:latest"
 
     input: 
-        path readsPath
+        tuple val(meta), path(bamPath)
 
     output:
-        path "${readsPath.baseName}_read_count.csv", emit: count
-        path "versions.yml"                        , emit: versions
+        tuple val(meta), path("${meta.id}_read_count.csv"), emit: count
+        path "versions.yml"                               , emit: versions
     
     script:
     """
-    echo "${readsPath.baseName}, \$(samtools import $readsPath | samtools view -c)" >> ${readsPath.baseName}_read_count.csv
+    echo "${meta.id}, \$(samtools view $bamPath -c)" >> ${meta.id}_read_count.csv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
