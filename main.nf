@@ -44,7 +44,7 @@ workflow{
     ch_inputData = Channel.fromPath(params.inputFile)
                         .splitCsv(header: true)
                         .map { row ->
-                            [[id: row.sample_id,referenceName: row.reference_name,5GuideCutPos: row.5_guide_cut_pos,3GuideCutPos: row.3_guide_cut_pos],row.bam_path]
+                            [[id: row.sample_name,genomePath: row.genomePath,genomeName: row.genomeName],row.bamPath]
                         }
 
     ch_versions = Channel.empty()
