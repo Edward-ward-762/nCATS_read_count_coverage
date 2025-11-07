@@ -16,6 +16,7 @@
 include { DUMP_SOFTWARE_VERSIONS } from './modules/local/dump_software_versions.nf'
 include { readsCount             } from './modules/local/readsCount.nf'
 include { EXTRACT_COVERAGE       } from './modules/local/extract_coverage/extract_coverage.nf'
+include { APPEND_COVERAGE        } from './modules/local/append_coverage/append_coverage.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -109,7 +110,8 @@ workflow{
     readsCount(
         ch_inputData.map{ meta, bam -> [meta, bam] }
     )
-    ch_versions = ch_versions.mix(readsCount.out.versions)
+    ch_versions   = ch_versions.mix(readsCount.out.versions)
+    ch_read_count = readsCount.out.count
 
 
     //
@@ -129,6 +131,28 @@ workflow{
     )
     ch_versions       = ch_versions.mix(EXTRACT_COVERAGE.out.versions)
     ch_coverage_value = EXTRACT_COVERAGE.out.coverage_value
+
+    //
+    // CHANNEL: combine read count and coverage 
+    //
+
+    ch_read_coverage = ch_read_count
+        .join(ch_coverage_value, by: [0])
+        .map {
+            meta, read, coverage ->
+                if (coverage) {
+                    [meta, read, coverage]
+                }
+        }
+
+    //
+    // MODULE: Append coverage information to read count file
+    //
+
+    APPEND_COVERAGE(
+        ch_read_coverage.map{ meta, read, coverage -> [meta, read, coverage] }
+    )
+
 
     //
     // ****************************
