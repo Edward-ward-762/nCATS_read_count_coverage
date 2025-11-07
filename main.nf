@@ -15,6 +15,7 @@
 
 include { DUMP_SOFTWARE_VERSIONS } from './modules/local/dump_software_versions.nf'
 include { readsCount             } from './modules/local/readsCount.nf'
+include { EXTRACT_COVERAGE       } from './modules/local/extract_coverage/extract_coverage.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
