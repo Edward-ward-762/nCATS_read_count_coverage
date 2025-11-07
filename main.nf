@@ -17,6 +17,7 @@ include { DUMP_SOFTWARE_VERSIONS } from './modules/local/dump_software_versions.
 include { readsCount             } from './modules/local/readsCount.nf'
 include { EXTRACT_COVERAGE       } from './modules/local/extract_coverage/extract_coverage.nf'
 include { APPEND_COVERAGE        } from './modules/local/append_coverage/append_coverage.nf'
+include { COLLECT_STATS          } from './modules/local/collect_stats/collect_stats.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -152,7 +153,24 @@ workflow{
     APPEND_COVERAGE(
         ch_read_coverage.map{ meta, read, coverage -> [meta, read, coverage] }
     )
+    ch_merged = APPEND_COVERAGE.out.merged.collect()
 
+
+    //
+    // ****************************
+    //
+    // SECTION: Collate all read coverage stats
+    //
+    // ****************************
+    //
+
+    //
+    // MODULE: Collect all read coverage stats
+    //
+
+    COLLECT_STATS(
+        ch_merged.map{ meta, file -> [file] }
+    )
 
     //
     // ****************************
