@@ -153,8 +153,11 @@ workflow{
     APPEND_COVERAGE(
         ch_read_coverage.map{ meta, read, coverage -> [meta, read, coverage] }
     )
-    ch_merged = APPEND_COVERAGE.out.merged.collect()
+    ch_merged = APPEND_COVERAGE.out.merged
 
+    ch_merged_file = ch_merged
+        .map{ meta, file -> [file] }
+        .collect()
 
     //
     // ****************************
@@ -169,7 +172,7 @@ workflow{
     //
 
     COLLECT_STATS(
-        ch_merged.map{ meta, file -> [file] }
+        ch_merged_file
     )
 
     //
