@@ -15,6 +15,9 @@
 
 include { DUMP_SOFTWARE_VERSIONS } from './modules/local/dump_software_versions.nf'
 include { readsCount             } from './modules/local/readsCount.nf'
+include { EXTRACT_COVERAGE       } from './modules/local/extract_coverage/extract_coverage.nf'
+include { APPEND_COVERAGE        } from './modules/local/append_coverage/append_coverage.nf'
+include { COLLECT_STATS          } from './modules/local/collect_stats/collect_stats.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -89,7 +92,8 @@ workflow{
         [[],[]],
         [[],[]]
     )
-    ch_versions = ch_versions.mix(SAMTOOLS_COVERAGE.out.versions)
+    ch_coverage_file = SAMTOOLS_COVERAGE.out.coverage
+    ch_versions      = ch_versions.mix(SAMTOOLS_COVERAGE.out.versions)
 
 
     //
@@ -101,13 +105,76 @@ workflow{
     //
 
     //
-    // MODULE: readsCount
+    // MODULE: Count reads in bam file
     //
 
     readsCount(
         ch_inputData.map{ meta, bam -> [meta, bam] }
     )
-    ch_versions = ch_versions.mix(readsCount.out.versions)
+    ch_versions   = ch_versions.mix(readsCount.out.versions)
+    ch_read_count = readsCount.out.count
+
+
+    //
+    // ****************************
+    //
+    // SECTION: Collate read count and coverage stats
+    //
+    // ****************************
+    //
+
+    //
+    // MODULE: Extract coverage information from coverage text file
+    //
+
+    EXTRACT_COVERAGE(
+        ch_coverage_file.map{ meta, coverage -> [meta, coverage] }
+    )
+    ch_versions       = ch_versions.mix(EXTRACT_COVERAGE.out.versions)
+    ch_coverage_value = EXTRACT_COVERAGE.out.coverage_value
+
+    //
+    // CHANNEL: combine read count and coverage 
+    //
+
+    ch_read_coverage = ch_read_count
+        .join(ch_coverage_value, by: [0])
+        .map {
+            meta, read, coverage ->
+                if (coverage) {
+                    [meta, read, coverage]
+                }
+        }
+
+    //
+    // MODULE: Append coverage information to read count file
+    //
+
+    APPEND_COVERAGE(
+        ch_read_coverage.map{ meta, read, coverage -> [meta, read, coverage] }
+    )
+    ch_merged = APPEND_COVERAGE.out.merged
+
+    ch_merged_file = ch_merged
+        .map{ meta, file -> [file] }
+        .collect()
+
+    //
+    // ****************************
+    //
+    // SECTION: Collate all read coverage stats
+    //
+    // ****************************
+    //
+
+    //
+    // MODULE: Collect all read coverage stats
+    //
+
+    COLLECT_STATS(
+        ch_merged_file
+    )
+
 
     //
     // ****************************
