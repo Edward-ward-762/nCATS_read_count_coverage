@@ -90,7 +90,8 @@ workflow{
         [[],[]],
         [[],[]]
     )
-    ch_versions = ch_versions.mix(SAMTOOLS_COVERAGE.out.versions)
+    ch_coverage_file = SAMTOOLS_COVERAGE.out.coverage
+    ch_versions      = ch_versions.mix(SAMTOOLS_COVERAGE.out.versions)
 
 
     //
@@ -102,13 +103,32 @@ workflow{
     //
 
     //
-    // MODULE: readsCount
+    // MODULE: Count reads in bam file
     //
 
     readsCount(
         ch_inputData.map{ meta, bam -> [meta, bam] }
     )
     ch_versions = ch_versions.mix(readsCount.out.versions)
+
+
+    //
+    // ****************************
+    //
+    // SECTION: Collate read count and coverage stats
+    //
+    // ****************************
+    //
+
+    //
+    // MODULE: Extract coverage information from coverage text file
+    //
+
+    EXTRACT_COVERAGE(
+        ch_coverage_file.map{ meta, coverage -> [meta, coverage] }
+    )
+    ch_versions       = ch_versions.mix(EXTRACT_COVERAGE.out.versions)
+    ch_coverage_value = EXTRACT_COVERAGE.out.coverage_value
 
     //
     // ****************************
