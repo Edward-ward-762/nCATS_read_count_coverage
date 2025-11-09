@@ -49,3 +49,5 @@ coverage_value = coverage_line[80:len(coverage_line)]
 
 with open(args.output, "w") as text_file:
     print(coverage_value, file=text_file)
+
+dump_versions(args.process_name)
