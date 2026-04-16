@@ -25,8 +25,10 @@ include { COLLECT_STATS          } from './modules/local/collect_stats/collect_s
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { SAMTOOLS_COVERAGE } from './modules/nf-core/samtools/coverage/main.nf'
-include { SAMTOOLS_INDEX    } from './modules/nf-core/samtools/index/main.nf'
+include { SAMTOOLS_COVERAGE                    } from './modules/nf-core/samtools/coverage/main.nf'
+include { SAMTOOLS_INDEX                       } from './modules/nf-core/samtools/index/main.nf'
+include { SAMTOOLS_INDEX as SAM_INDEX_BAM_FILT } from './modules/nf-core/samtools/index/main.nf'
+include { SAMTOOLS_VIEW                        } from './modules/nf-core/samtools/view/main.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,7 +49,7 @@ workflow{
     ch_inputData = Channel.fromPath(params.inputFile)
                         .splitCsv(header: true)
                         .map { row ->
-                            [[id: row.sample_id,referenceName: row.reference_name,startCutSite: row.start_cut_site,endCutSite: row.end_cut_site],row.bam_path]
+                            [[id: row.sample_id,referenceName: row.reference_name,startCutSite: row.start_cut_site,endCutSite: row.end_cut_site,filterLength: row.filter_length],row.bam_path]
                         }
 
     ch_versions = Channel.empty()
@@ -105,11 +107,32 @@ workflow{
     //
 
     //
-    // MODULE: Count reads in bam file
+    // MODULE: Filter reads in bam file
+    //
+
+    SAMTOOLS_VIEW(
+        ch_input_bam_bai.map{ meta, bam, bai -> [meta, bam, bai] },
+        [[],[],[]],
+        [[],[]],
+        [[],[]],
+        "bai"
+    )
+    ch_filt_bam = SAMTOOLS_VIEW.out.bam
+
+    //
+    // MODULE: Index size filtered bam file
+    //
+
+    SAM_INDEX_BAM_FILT(
+        ch_filt_bam.map{ meta, bam -> [meta, bam] }
+    )
+
+    //
+    // MODULE: Count reads in size filtered bam file
     //
 
     readsCount(
-        ch_inputData.map{ meta, bam -> [meta, bam] }
+        ch_filt_bam.map{ meta, bam -> [meta, bam] }
     )
     ch_versions   = ch_versions.mix(readsCount.out.versions)
     ch_read_count = readsCount.out.count
