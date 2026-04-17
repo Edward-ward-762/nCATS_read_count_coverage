@@ -13,7 +13,7 @@ process EXTRACT_COVERAGE {
     """
     python3 $workflow.projectDir/bin/extract_coverage_information.py \
             --input $file \
-            --output "${file.baseName}_value.txt" \
+            --output "${file.baseName}_coverage_value.txt" \
             --process_name $task.process
     """
 }

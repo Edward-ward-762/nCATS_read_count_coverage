@@ -15,7 +15,7 @@ process readsCount {
     
     script:
     """
-    echo "${meta.id}, \$(samtools view $bamPath -c)" >> ${meta.id}_read_count.csv
+    echo "\$(samtools view $bamPath -c)" >> ${meta.id}_read_count.csv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
