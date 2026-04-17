@@ -10,6 +10,6 @@ process APPEND_COVERAGE {
 
     script:
     """
-    echo "\$(cat $read), \$(cat $filt_read), \$(cat $coverage), \$(cat $filt_cov)" >> "${meta.id}_read_coverage.csv"
+    echo "${meta.id}, \$(cat $read), \$(cat $filt_read), \$(cat $coverage), \$(cat $filt_cov)" >> "${meta.id}_read_coverage.csv"
     """
 }
