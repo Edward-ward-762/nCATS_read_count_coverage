@@ -229,7 +229,6 @@ workflow{
     //
 
     ch_collated_data = ch_input_read_count
-        .join(ch_input_read_count, by: [0])
         .join(ch_bam_filt_read_count, by: [0])
         .join(ch_coverage_value, by: [0])
         .join(ch_filt_coverage_value, by: [0])
