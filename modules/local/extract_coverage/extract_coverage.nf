@@ -6,7 +6,7 @@ process EXTRACT_COVERAGE {
     tuple val(meta), path(file)
 
     output:
-    tuple val(meta), path("${file.baseName}_value.txt"), emit: coverage_value
+    tuple val(meta), path("${file.baseName}_coverage_value.txt"), emit: coverage_value
     path "versions.yml"                                , emit: versions, optional: true
 
     script:
