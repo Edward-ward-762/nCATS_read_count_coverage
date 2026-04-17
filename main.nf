@@ -198,8 +198,8 @@ workflow{
     extract_bam_filt_cov(
         ch_coverage_file.map{ meta, coverage -> [meta, coverage] }
     )
-    ch_versions       = ch_versions.mix(bam_filt_cov.out.versions)
-    ch_coverage_value = bam_filt_cov.out.coverage_value
+    ch_versions       = ch_versions.mix(extract_bam_filt_cov.out.versions)
+    ch_coverage_value = extract_bam_filt_cov.out.coverage_value
 
     //
     // ****************************
