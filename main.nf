@@ -232,7 +232,6 @@ workflow{
         .join(ch_bam_filt_read_count, by: [0])
         .join(ch_coverage_value, by: [0])
         .join(ch_filt_coverage_value, by: [0])
-        .view()
 
 /*
     //
@@ -248,18 +247,22 @@ workflow{
                 }
         }
 
+*/
+
     //
     // MODULE: Append coverage information to read count file
     //
 
     APPEND_COVERAGE(
-        ch_read_coverage.map{ meta, read, coverage -> [meta, read, coverage] }
+        ch_collated_data.map{ meta, read, filt_count, coverage, filt_cov -> [meta, read, filt_count, coverage, filt_cov] }
     )
     ch_merged = APPEND_COVERAGE.out.merged
 
     ch_merged_file = ch_merged
         .map{ meta, file -> [file] }
         .collect()
+
+/*
 
     //
     // ****************************
