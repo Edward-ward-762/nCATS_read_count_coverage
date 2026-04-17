@@ -199,7 +199,7 @@ workflow{
         ch_coverage_file.map{ meta, coverage -> [meta, coverage] }
     )
     ch_versions       = ch_versions.mix(extract_bam_filt_cov.out.versions)
-    ch_coverage_value = extract_bam_filt_cov.out.coverage_value
+    ch_filt_coverage_value = extract_bam_filt_cov.out.coverage_value
 
     //
     // ****************************
@@ -227,6 +227,13 @@ workflow{
     //
     // ****************************
     //
+
+    ch_collated_data = ch_input_read_count
+        .join(ch_input_read_count, by: [0])
+        .join(ch_bam_filt_read_count, by: [0])
+        .join(ch_coverage_value, by: [0])
+        .join(ch_filt_coverage_value, by: [0])
+        .view()
 
 /*
     //
