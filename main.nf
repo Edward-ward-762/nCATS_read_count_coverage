@@ -228,8 +228,9 @@ workflow{
     // ****************************
     //
 
+/*
     //
-    // CHANNEL: combine read count and coverage 
+    // CHANNEL: combine read count and coverage
     //
 
     ch_read_coverage = ch_input_read_count
@@ -278,7 +279,7 @@ workflow{
     //
     // ****************************
     //
-
+*/
     //
     // MODULE: Collect software versions
     //
