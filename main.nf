@@ -232,7 +232,7 @@ workflow{
     // CHANNEL: combine read count and coverage 
     //
 
-    ch_read_coverage = ch_read_count
+    ch_read_coverage = ch_input_read_count
         .join(ch_coverage_value, by: [0])
         .map {
             meta, read, coverage ->
