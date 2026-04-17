@@ -2,7 +2,7 @@
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Blank pipeline
+    nCATS read count and coverage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
@@ -13,11 +13,13 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { DUMP_SOFTWARE_VERSIONS } from './modules/local/dump_software_versions.nf'
-include { readsCount             } from './modules/local/readsCount.nf'
-include { EXTRACT_COVERAGE       } from './modules/local/extract_coverage/extract_coverage.nf'
-include { APPEND_COVERAGE        } from './modules/local/append_coverage/append_coverage.nf'
-include { COLLECT_STATS          } from './modules/local/collect_stats/collect_stats.nf'
+include { DUMP_SOFTWARE_VERSIONS           } from './modules/local/dump_software_versions.nf'
+include { readsCount                       } from './modules/local/readsCount.nf'
+include { readsCount as bam_filt_count     } from './modules/local/readsCount.nf'
+include { EXTRACT_COVERAGE                 } from './modules/local/extract_coverage/extract_coverage.nf'
+include { EXTRACT_COVERAGE as bam_filt_cov } from './modules/local/extract_coverage/extract_coverage.nf'
+include { APPEND_COVERAGE                  } from './modules/local/append_coverage/append_coverage.nf'
+include { COLLECT_STATS                    } from './modules/local/collect_stats/collect_stats.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -25,10 +27,11 @@ include { COLLECT_STATS          } from './modules/local/collect_stats/collect_s
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { SAMTOOLS_COVERAGE                    } from './modules/nf-core/samtools/coverage/main.nf'
-include { SAMTOOLS_INDEX                       } from './modules/nf-core/samtools/index/main.nf'
-include { SAMTOOLS_INDEX as SAM_INDEX_BAM_FILT } from './modules/nf-core/samtools/index/main.nf'
-include { SAMTOOLS_VIEW                        } from './modules/nf-core/samtools/view/main.nf'
+include { SAMTOOLS_COVERAGE                     } from './modules/nf-core/samtools/coverage/main.nf'
+include { SAMTOOLS_COVERAGE as SAM_COV_BAM_FILT } from './modules/nf-core/samtools/coverage/main.nf'
+include { SAMTOOLS_INDEX                        } from './modules/nf-core/samtools/index/main.nf'
+include { SAMTOOLS_INDEX as SAM_INDEX_BAM_FILT  } from './modules/nf-core/samtools/index/main.nf'
+include { SAMTOOLS_VIEW                         } from './modules/nf-core/samtools/view/main.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,14 +100,42 @@ workflow{
     ch_coverage_file = SAMTOOLS_COVERAGE.out.coverage
     ch_versions      = ch_versions.mix(SAMTOOLS_COVERAGE.out.versions)
 
+    //
+    // MODULE: Extract coverage information from coverage text file
+    //
+
+    EXTRACT_COVERAGE(
+        ch_coverage_file.map{ meta, coverage -> [meta, coverage] }
+    )
+    ch_versions       = ch_versions.mix(EXTRACT_COVERAGE.out.versions)
+    ch_coverage_value = EXTRACT_COVERAGE.out.coverage_value
 
     //
     // ****************************
     //
-    // SECTION: Calculate number of reads in input bam file(s)
+    // SECTION: Count reads in input bam file
     //
     // ****************************
     //
+
+    //
+    // MODULE: Count reads in bam file
+    //
+
+    readsCount(
+        ch_inputData.map{ meta, bam -> [meta, bam] }
+    )
+    ch_versions         = ch_versions.mix(readsCount.out.versions)
+    ch_input_read_count = readsCount.out.count 
+
+
+    //
+    // ****************************
+    //
+    // SECTION: Calculate coverage stats of filtered bam file(s)
+    //
+    // ****************************
+    //  
 
     //
     // MODULE: Filter reads in bam file
@@ -117,25 +148,76 @@ workflow{
         [[],[]],
         "bai"
     )
-    ch_filt_bam = SAMTOOLS_VIEW.out.bam
+    ch_bam_filt = SAMTOOLS_VIEW.out.bam
+
+    //
+    // CHANNEL: Filter empty bams
+    //
+    ch_bam_filt = ch_bam_filt.filter { row ->
+        file(row[1]).size() >= params.min_bam_size
+    }
 
     //
     // MODULE: Index size filtered bam file
     //
 
     SAM_INDEX_BAM_FILT(
-        ch_filt_bam.map{ meta, bam -> [meta, bam] }
+        ch_bam_filt.map{ meta, bam -> [meta, bam] }
     )
+    ch_versions     = ch_versions.mix(SAM_INDEX_BAM_FILT.out.versions)
+    ch_bam_filt_bai = SAM_INDEX_BAM_FILT.out.bai
+
+    //
+    // CHANNEL: Combine BAM and BAI
+    //
+    ch_bam_filt_bam_bai = ch_bam_filt
+        .join(ch_bam_filt_bai, by: [0])
+        .map {
+            meta, bam, bai ->
+                if (bai) {
+                    [ meta, bam, bai ]
+                }
+        }
+
+    //
+    // MODULE: SAMTOOLS COVERAGE
+    //
+
+    SAM_COV_BAM_FILT(
+        ch_bam_filt_bam_bai.map{ meta, bam, bai -> [meta, bam, bai] },
+        [[],[]],
+        [[],[]]
+    )
+    ch_bam_filt_coverage_file = SAM_COV_BAM_FILT.out.coverage
+    ch_versions               = ch_versions.mix(SAM_COV_BAM_FILT.out.versions)
+
+    //
+    // MODULE: Extract coverage information from coverage text file
+    //
+
+    bam_filt_cov(
+        ch_coverage_file.map{ meta, coverage -> [meta, coverage] }
+    )
+    ch_versions       = ch_versions.mix(bam_filt_cov.out.versions)
+    ch_coverage_value = bam_filt_cov.out.coverage_value
+
+    //
+    // ****************************
+    //
+    // SECTION: Count reads in alignment length filtered bam file(s)
+    //
+    // ****************************
+    //
 
     //
     // MODULE: Count reads in size filtered bam file
     //
 
-    readsCount(
-        ch_filt_bam.map{ meta, bam -> [meta, bam] }
+    bam_filt_count(
+        ch_bam_filt.map{ meta, bam -> [meta, bam] }
     )
-    ch_versions   = ch_versions.mix(readsCount.out.versions)
-    ch_read_count = readsCount.out.count
+    ch_versions            = ch_versions.mix(readsCount.out.versions)
+    ch_bam_filt_read_count = readsCount.out.count
 
 
     //
@@ -145,16 +227,6 @@ workflow{
     //
     // ****************************
     //
-
-    //
-    // MODULE: Extract coverage information from coverage text file
-    //
-
-    EXTRACT_COVERAGE(
-        ch_coverage_file.map{ meta, coverage -> [meta, coverage] }
-    )
-    ch_versions       = ch_versions.mix(EXTRACT_COVERAGE.out.versions)
-    ch_coverage_value = EXTRACT_COVERAGE.out.coverage_value
 
     //
     // CHANNEL: combine read count and coverage 
