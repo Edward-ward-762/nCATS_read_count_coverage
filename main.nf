@@ -13,13 +13,13 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { DUMP_SOFTWARE_VERSIONS           } from './modules/local/dump_software_versions.nf'
-include { readsCount                       } from './modules/local/readsCount.nf'
-include { readsCount as bam_filt_count     } from './modules/local/readsCount.nf'
-include { EXTRACT_COVERAGE                 } from './modules/local/extract_coverage/extract_coverage.nf'
-include { EXTRACT_COVERAGE as bam_filt_cov } from './modules/local/extract_coverage/extract_coverage.nf'
-include { APPEND_COVERAGE                  } from './modules/local/append_coverage/append_coverage.nf'
-include { COLLECT_STATS                    } from './modules/local/collect_stats/collect_stats.nf'
+include { DUMP_SOFTWARE_VERSIONS                   } from './modules/local/dump_software_versions.nf'
+include { readsCount                               } from './modules/local/readsCount.nf'
+include { readsCount as bam_filt_count             } from './modules/local/readsCount.nf'
+include { EXTRACT_COVERAGE                         } from './modules/local/extract_coverage/extract_coverage.nf'
+include { EXTRACT_COVERAGE as extract_bam_filt_cov } from './modules/local/extract_coverage/extract_coverage.nf'
+include { APPEND_COVERAGE                          } from './modules/local/append_coverage/append_coverage.nf'
+include { COLLECT_STATS                            } from './modules/local/collect_stats/collect_stats.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -195,7 +195,7 @@ workflow{
     // MODULE: Extract coverage information from coverage text file
     //
 
-    bam_filt_cov(
+    extract_bam_filt_cov(
         ch_coverage_file.map{ meta, coverage -> [meta, coverage] }
     )
     ch_versions       = ch_versions.mix(bam_filt_cov.out.versions)
