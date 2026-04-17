@@ -262,7 +262,6 @@ workflow{
         .map{ meta, file -> [file] }
         .collect()
 
-/*
 
     //
     // ****************************
@@ -288,7 +287,7 @@ workflow{
     //
     // ****************************
     //
-*/
+
     //
     // MODULE: Collect software versions
     //
