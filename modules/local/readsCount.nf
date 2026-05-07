@@ -10,12 +10,12 @@ process readsCount {
         tuple val(meta), path(bamPath)
 
     output:
-        tuple val(meta), path("${meta.id}_read_count.csv"), emit: count
+        tuple val(meta), path("${bamPath}_read_count.csv"), emit: count
         path "versions.yml"                               , emit: versions
     
     script:
     """
-    echo "${meta.id}, \$(samtools view $bamPath -c)" >> ${meta.id}_read_count.csv
+    echo "\$(samtools view $bamPath -c)" >> ${bamPath}_read_count.csv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

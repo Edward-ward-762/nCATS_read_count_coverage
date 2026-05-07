@@ -3,13 +3,13 @@ process APPEND_COVERAGE {
     label 'process_low'
 
     input:
-    tuple val(meta), file(read), file(coverage)
+    tuple val(meta), file(read), file(filt_read), file(coverage), file(filt_cov)
 
     output:
     tuple val(meta), file("${meta.id}_read_coverage.csv"), emit: merged
 
     script:
     """
-    echo "\$(cat $read), \$(cat $coverage)" >> "${meta.id}_read_coverage.csv"
+    echo "${meta.id}, \$(cat $read), \$(cat $filt_read), \$(cat $coverage), \$(cat $filt_cov)" >> "${meta.id}_read_coverage.csv"
     """
 }

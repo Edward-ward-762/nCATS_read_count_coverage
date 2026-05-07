@@ -6,11 +6,14 @@ process EXTRACT_COVERAGE {
     tuple val(meta), path(file)
 
     output:
-    tuple val(meta), path("${file.baseName}_value.txt"), emit: coverage_value
+    tuple val(meta), path("${file.baseName}_coverage_value.txt"), emit: coverage_value
     path "versions.yml"                                , emit: versions, optional: true
 
     script:
     """
-    python3 $workflow.projectDir/bin/extract_coverage_information.py --input $file --output "${file.baseName}_value.txt" --process_name $task.process
+    python3 $workflow.projectDir/bin/extract_coverage_information.py \
+            --input $file \
+            --output "${file.baseName}_coverage_value.txt" \
+            --process_name $task.process
     """
 }

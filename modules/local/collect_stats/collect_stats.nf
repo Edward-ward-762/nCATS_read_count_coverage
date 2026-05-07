@@ -9,6 +9,7 @@ process COLLECT_STATS {
 
     script:
     """
-    cat ${input} > "read_count_and_coverage.csv"
+    echo "sample_id,input_read_count,filtered_read_count, input_coverage, filtered_coverage" > "read_count_and_coverage.csv"
+    cat ${input} >> "read_count_and_coverage.csv"
     """
 }
